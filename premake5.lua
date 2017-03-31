@@ -12,6 +12,18 @@ project "glad"
 		"externals/glad/src/*.c",
 	}
 
+project "uWebSockets"
+	kind "StaticLib"
+	language "c++"
+	location "build/libs/uWebSockets"
+	flags { "C++14" }
+	includedirs {
+		"externals/uWebSockets/src"
+	}
+	files {
+		"externals/uWebSockets/src/*.cpp"
+	}
+
 project "Avocado"
 	kind "ConsoleApp"
 	language "c++"
@@ -26,7 +38,9 @@ project "Avocado"
 		"externals/imgui",
 		"externals/SDL2/include",
 		"externals/glad/include",
-		"externals/glm"
+		"externals/glm",
+		"externals/uWebSockets/src",
+		"externals/json/src"
 	}
 
 	files { 
@@ -38,6 +52,17 @@ project "Avocado"
 		"src/renderer/**.*",
 		"src/platform/**.*"
 	}
+
+	links {
+		"uWebSockets",
+		"ssl",
+		"crypto",
+		"pthread",
+		"z",
+		"uv"
+	}
+
+	defines { "JSON_NOEXCEPTION" }
 	
 	filter "configurations:Debug"
 		defines { "DEBUG" }
@@ -77,6 +102,5 @@ project "Avocado"
 			"-Wno-write-strings",
 			"-Wno-unused-private-field",
 			"-Wno-unused-const-variable",
-			"-fno-operator-names",
 			"-fno-exceptions"
 		}

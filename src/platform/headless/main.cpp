@@ -2,8 +2,14 @@
 #include <string>
 #include <memory>
 #include <cassert>
+#include <thread>
+#include <uWS.h>
+#include <json.hpp>
 #include "utils/file.h"
+#include "utils/string.h"
 #include "mips.h"
+
+using json = nlohmann::json;
 
 bool emulateGpuCycles(std::unique_ptr<mips::CPU> &cpu, std::unique_ptr<device::gpu::GPU> &gpu, int cycles) {
     static int gpuLine = 0;
@@ -57,6 +63,24 @@ void emulateFrame(std::unique_ptr<mips::CPU> &cpu, std::unique_ptr<device::gpu::
 
 int main(int argc, char **argv) {
     std::unique_ptr<mips::CPU> cpu = std::make_unique<mips::CPU>();
+	uWS::Hub h;
+
+    h.onMessage([&cpu](uWS::WebSocket<uWS::SERVER> *ws, char *message, size_t length, uWS::OpCode opCode) {
+		json regs;
+		for (int i = 0; i<32; i++) {
+			regs.push_back(cpu->reg[i]);
+		}
+		json j;
+		j["cpu"]["reg"] = regs;
+		j["cpu"]["pc"] = cpu->PC;
+		j["cpu"]["lo"] = cpu->lo;
+		j["cpu"]["hi"] = cpu->hi;
+
+		std::string raw = j.dump(4);
+        ws->send(raw.c_str(), raw.length(), opCode);
+    });
+
+	h.listen(3000);
 
     auto _bios = getFileContents("data/bios/SCPH1001.BIN");  // DTLH3000.BIN BOOTS
     if (_bios.empty()) {
@@ -70,6 +94,11 @@ int main(int argc, char **argv) {
 
     auto gpu = std::make_unique<device::gpu::GPU>();
     cpu->setGPU(gpu.get());
+
+	std::thread serverThread([&h](){
+		h.run();
+	});
+	serverThread.detach();
 
     for (;;) {
         if (cpu->state != mips::CPU::State::run) break;

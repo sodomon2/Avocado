@@ -130,9 +130,9 @@ PrimaryInstruction SpecialTable[64] = {
     {33, addu, "addu"},
     {34, sub, "sub"},
     {35, subu, "subu"},
-    {36, and, "and"},
-    {37, or, "or"},
-    {38, xor, "xor"},
+    {36, _and, "and"},
+    {37, _or, "or"},
+    {38, _xor, "xor"},
     {39, nor, "nor"},
 
     {40, invalid, "INVALID"},
@@ -427,21 +427,21 @@ void subu(CPU *cpu, Opcode i) {
 
 // And
 // and rd, rs, rt
-void and (CPU * cpu, Opcode i) {
+void _and (CPU * cpu, Opcode i) {
     disasm("r%d, r%d, r%d", i.rd, i.rs, i.rt);
     cpu->reg[i.rd] = cpu->reg[i.rs] & cpu->reg[i.rt];
 }
 
 // Or
 // OR rd, rs, rt
-void or (CPU * cpu, Opcode i) {
+void _or (CPU * cpu, Opcode i) {
     disasm("r%d, r%d, r%d", i.rd, i.rs, i.rt);
     cpu->reg[i.rd] = cpu->reg[i.rs] | cpu->reg[i.rt];
 }
 
 // Xor
 // XOR rd, rs, rt
-void xor
+void _xor
     (CPU * cpu, Opcode i) {
         disasm("r%d, r%d, r%d", i.rd, i.rs, i.rt);
         cpu->reg[i.rd] = cpu->reg[i.rs] ^ cpu->reg[i.rt];
