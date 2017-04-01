@@ -4,75 +4,111 @@
     <meta charset="UTF-8">
     <title>Title of the document</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
+    <script src="js/rivets.bundled.min.js"></script>
     <style>
-    * {
-        font-family: Courier New, Courier, monospace;
-    }
-
+        html, body {
+            margin: 10px;
+        }
+        * {
+            font-family: Courier New, Courier, monospace;
+        }
     </style>
 </head>
 
 <body>
-    <div id="status"></div>
-    <div id="cpu">
-        CPU
-        <p id="pc"></p>
-        <p id="hi"></p>
-        <p id="lo"></p>
+    <h1>Avocado debug</h1>
 
-        <p>Registers</p>
-        <ul id="reg">
-        </ul>
+    <div id="info">
+        <h3 rv-if="connected">Connected (<a href="#" rv-on-click="event.disconnect">Disconnect</a>)</h3>
+        <h3 rv-unless="connected">Disconnected (<a href="#" rv-on-click="event.connect">Connect</a>)</h3>
+        <h4 rv-show="error">Cannot connect to websocket</h4>
+        <div id="control" rv-show="connected">
+            <div>Control</div>
+            <button rv-on-click="event.emu.pause">Pause</button>
+            <button rv-on-click="event.emu.step">Step</button>
+        </div>
+
+        <div id="cpu" rv-show="connected">
+            <p>CPU</p>
+            <div>pc: { cpu.pc | hex }</div>
+            <div>hi: { cpu.hi | hex }</div>
+            <div>lo: { cpu.lo | hex }</div>
+
+            <p>Registers</p>
+            <ul>
+                <li rv-each-reg="cpu.reg">
+                    r{ %reg% }: { reg | hex }
+                </li>
+            </ul>
+        </div>
     </div>
 
 <script language="javascript" type="text/javascript">
     var ws;
+    var data = {
+        connecting: false,
+        connected: false,
+        error: false,
+        cpu: {},
+        event: {
+            emu: {
+                pause: function() {
+                    console.log("Pause emulation");
+                    ws.send("P");
+                },
+                step: function() {
+                    console.log("Single step");
+                    ws.send("S");
+                }
+            },
+            connect: function() {
+                connect();
+            },
+            disconnect: function() {
+                ws.close();
+            }
+        }
+    };
+
+    rivets.formatters.hex = function(value) {
+        if (value == undefined) {
+            return "";
+        }
+        var h = value.toString(16);
+        while (h.length < 8) {
+            h = "0" + h;
+        }
+        return "0x" + h;
+    }
+
+    rivets.bind($('#info'), data );
+    connect();
+
+
     function connect() {
         ws = new WebSocket("ws://liquid.noip.me:3000");
         var interval = 0;
-
-        $("#status").html("Status: Connecting...");
         
         ws.onopen = function(evt) { 
-            $("#status").html("Status: Connected <a href=\"#\" id=\"disconnect\">disconnect</a>");
-            $("#disconnect").on("click", function() {
-                disconnect();
-            });
-            interval = setInterval(function() {
-                ws.send(".");
-            }, 16);
+            data.connected = true;
+            data.error = false;
+            interval = setInterval(function() {ws.send(".")}, 50);
         };
         ws.onclose = function(evt) {
-            $("#status").html("Status: Disconnected <a href=\"#\" id=\"reconnect\">reconnect</a>");
-            $("#reconnect").on("click", function() {
-                connect();
-            });
+            data.connected = false;
+            data.cpu = {};
             clearInterval(interval);
         };
         ws.onmessage = function(evt) { 
             var j = JSON.parse(evt.data);
-            $("#pc").text("PC: " + j.cpu.pc.toString(16));
-            $("#hi").text("hi: " + j.cpu.hi.toString(16));
-            $("#lo").text("lo: " + j.cpu.lo.toString(16));
-            
-            $("#reg").empty();
-            for (var i = 0; i < 32; i++) {
-                $("#reg").append("<li>r"+i+": "+j.cpu.reg[i].toString(16)+"</li>")
-            }
-        };
+            data.cpu = j.cpu;
+        }
         ws.onerror = function(evt) { 
-            $("#status").text("Status: Error ("+evt+")");
+            data.connected = false;
+            data.error = true;
             clearInterval(interval);
         };
     }
-
-    function disconnect() {
-        ws.close();
-    }
-
-    $(function() {
-        connect();
-    });
   </script>
 
 </body>
