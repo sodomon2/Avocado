@@ -83,14 +83,14 @@ union CounterMode {
     uint8_t _byte[4];
 
     CounterMode() : _reg(0) {}
-	void write(int n, uint8_t v) {
-		if (n > 4) return;
-		_byte[n] = v;
-	}
-	uint8_t read(int n) const {
-		if (n > 4) return 0;
-		return _byte[n];
-	}
+    void write(int n, uint8_t v) {
+        if (n > 4) return;
+        _byte[n] = v;
+    }
+    uint8_t read(int n) const {
+        if (n > 4) return 0;
+        return _byte[n];
+    }
 };
 
 class Timer : public Device {
@@ -101,7 +101,7 @@ class Timer : public Device {
     CounterMode mode;
     Reg16 target;
 
-	int cnt = 0;
+    int cnt = 0;
 
     void *_cpu = nullptr;
 

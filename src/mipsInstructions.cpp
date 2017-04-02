@@ -163,8 +163,6 @@ PrimaryInstruction SpecialTable[64] = {
     {63, invalid, "INVALID"},
 };
 
-int part = 0;
-
 inline bool isOverflow(uint32_t result, uint32_t a, uint32_t b) {
 #define SIGN(x) ((x)&0x80000000)
     return !(SIGN(a) ^ SIGN(b)) && (SIGN(result) ^ SIGN(a));
@@ -175,7 +173,7 @@ void exception(mips::CPU *cpu, cop0::CAUSE::Exception cause) {
     cpu->cop0.cause.exception = cause;
 
     if (cpu->shouldJump) {
-        cpu->cop0.cause.isInDelaySlot = !true;
+        cpu->cop0.cause.isInDelaySlot = false;
         cpu->cop0.epc = cpu->PC - 4;  // EPC - return address from trap
     } else {
         cpu->cop0.epc = cpu->PC;
@@ -427,29 +425,28 @@ void subu(CPU *cpu, Opcode i) {
 
 // And
 // and rd, rs, rt
-void _and (CPU * cpu, Opcode i) {
+void _and(CPU *cpu, Opcode i) {
     disasm("r%d, r%d, r%d", i.rd, i.rs, i.rt);
     cpu->reg[i.rd] = cpu->reg[i.rs] & cpu->reg[i.rt];
 }
 
 // Or
 // OR rd, rs, rt
-void _or (CPU * cpu, Opcode i) {
+void _or(CPU *cpu, Opcode i) {
     disasm("r%d, r%d, r%d", i.rd, i.rs, i.rt);
     cpu->reg[i.rd] = cpu->reg[i.rs] | cpu->reg[i.rt];
 }
 
 // Xor
 // XOR rd, rs, rt
-void _xor
-    (CPU * cpu, Opcode i) {
-        disasm("r%d, r%d, r%d", i.rd, i.rs, i.rt);
-        cpu->reg[i.rd] = cpu->reg[i.rs] ^ cpu->reg[i.rt];
-    }
+void _xor(CPU *cpu, Opcode i) {
+    disasm("r%d, r%d, r%d", i.rd, i.rs, i.rt);
+    cpu->reg[i.rd] = cpu->reg[i.rs] ^ cpu->reg[i.rt];
+}
 
-    // Nor
-    // NOR rd, rs, rt
-    void nor(CPU *cpu, Opcode i) {
+// Nor
+// NOR rd, rs, rt
+void nor(CPU *cpu, Opcode i) {
     disasm("r%d, r%d, r%d", i.rd, i.rs, i.rt);
     cpu->reg[i.rd] = ~(cpu->reg[i.rs] | cpu->reg[i.rt]);
 }
@@ -684,6 +681,10 @@ void cop0(CPU *cpu, Opcode i) {
                     cpu->reg[i.rt] = cpu->cop0.epc;
                     break;
 
+                case 15:
+                    cpu->reg[i.rt] = cpu->cop0.revId;
+                    break;
+
                 default:
                     cpu->reg[i.rt] = 0;
                     break;
@@ -737,7 +738,7 @@ void cop2(CPU *cpu, Opcode i) { /*printf("COP2: 0x%08x\n", i.opcode);*/
 // Load Byte
 // LB rt, offset(base)
 void lb(CPU *cpu, Opcode i) {
-    disasm("r%d, %d(r%d)", i.rt, i.offset, i.rs);
+    disasm("r%d, %hx(r%d)", i.rt, i.offset, i.rs);
     uint32_t addr = cpu->reg[i.rs] + i.offset;
     cpu->reg[i.rt] = ((int32_t)(cpu->readMemory8(addr) << 24)) >> 24;
 }
@@ -745,7 +746,7 @@ void lb(CPU *cpu, Opcode i) {
 // Load Halfword
 // LH rt, offset(base)
 void lh(CPU *cpu, Opcode i) {
-    disasm("r%d, %d(r%d)", i.rt, i.offset, i.rs);
+    disasm("r%d, %hx(r%d)", i.rt, i.offset, i.rs);
     uint32_t addr = cpu->reg[i.rs] + i.offset;
     if (addr & 1)  // non aligned address
     {
@@ -758,7 +759,7 @@ void lh(CPU *cpu, Opcode i) {
 // Load Word Left
 // LWL rt, offset(base)
 void lwl(CPU *cpu, Opcode i) {
-    disasm("r%d, %d(r%d)", i.rt, i.offset, i.rs);
+    disasm("r%d, %hx(r%d)", i.rt, i.offset, i.rs);
 
     uint32_t addr = cpu->reg[i.rs] + i.offset;
 
@@ -786,7 +787,7 @@ void lwl(CPU *cpu, Opcode i) {
 // Load Word
 // LW rt, offset(base)
 void lw(CPU *cpu, Opcode i) {
-    disasm("r%d, %d(r%d)", i.rt, i.offset, i.rs);
+    disasm("r%d, %hx(r%d)", i.rt, i.offset, i.rs);
     uint32_t addr = cpu->reg[i.rs] + i.offset;
     if (addr & 3)  // non aligned address
     {
@@ -799,7 +800,7 @@ void lw(CPU *cpu, Opcode i) {
 // Load Byte Unsigned
 // LBU rt, offset(base)
 void lbu(CPU *cpu, Opcode i) {
-    disasm("r%d, %d(r%d)", i.rt, i.offset, i.rs);
+    disasm("r%d, %hx(r%d)", i.rt, i.offset, i.rs);
     uint32_t addr = cpu->reg[i.rs] + i.offset;
     cpu->reg[i.rt] = cpu->readMemory8(addr);
 }
@@ -807,7 +808,7 @@ void lbu(CPU *cpu, Opcode i) {
 // Load Halfword Unsigned
 // LHU rt, offset(base)
 void lhu(CPU *cpu, Opcode i) {
-    disasm("r%d, %d(r%d)", i.rt, i.offset, i.rs);
+    disasm("r%d, %hx(r%d)", i.rt, i.offset, i.rs);
     uint32_t addr = cpu->reg[i.rs] + i.offset;
     if (addr & 1)  // non aligned address
     {
@@ -820,7 +821,7 @@ void lhu(CPU *cpu, Opcode i) {
 // Load Word Right
 // LWR rt, offset(base)
 void lwr(CPU *cpu, Opcode i) {
-    disasm("r%d, %d(r%d)", i.rt, i.offset, i.rs);
+    disasm("r%d, %hx(r%d)", i.rt, i.offset, i.rs);
 
     uint32_t addr = cpu->reg[i.rs] + i.offset;
     uint32_t rt = cpu->reg[i.rt];
@@ -848,7 +849,7 @@ void lwr(CPU *cpu, Opcode i) {
 // Store Byte
 // SB rt, offset(base)
 void sb(CPU *cpu, Opcode i) {
-    disasm("r%d, %d(r%d)", i.rt, i.offset, i.rs);
+    disasm("r%d, %hx(r%d)", i.rt, i.offset, i.rs);
     uint32_t addr = cpu->reg[i.rs] + i.offset;
     cpu->writeMemory8(addr, cpu->reg[i.rt]);
 }
@@ -856,7 +857,7 @@ void sb(CPU *cpu, Opcode i) {
 // Store Halfword
 // SH rt, offset(base)
 void sh(CPU *cpu, Opcode i) {
-    disasm("r%d, %d(r%d)", i.rt, i.offset, i.rs);
+    disasm("r%d, %hx(r%d)", i.rt, i.offset, i.rs);
     uint32_t addr = cpu->reg[i.rs] + i.offset;
     if (addr & 1)  // non aligned address
     {
@@ -869,7 +870,7 @@ void sh(CPU *cpu, Opcode i) {
 // Store Word Left
 // SWL rt, offset(base)
 void swl(CPU *cpu, Opcode i) {
-    disasm("r%d, %d(r%d)", i.rt, i.offset, i.rs);
+    disasm("r%d, %hx(r%d)", i.rt, i.offset, i.rs);
 
     uint32_t addr = cpu->reg[i.rs] + i.offset;
     uint32_t rt = cpu->reg[i.rt];
@@ -896,7 +897,7 @@ void swl(CPU *cpu, Opcode i) {
 // Store Word
 // SW rt, offset(base)
 void sw(CPU *cpu, Opcode i) {
-    disasm("r%d, %d(r%d)", i.rt, i.offset, i.rs);
+    disasm("r%d, %hx(r%d)", i.rt, i.offset, i.rs);
     uint32_t addr = cpu->reg[i.rs] + i.offset;
     if (addr & 3)  // non aligned address
     {
@@ -909,7 +910,7 @@ void sw(CPU *cpu, Opcode i) {
 // Store Word Right
 // SWR rt, offset(base)
 void swr(CPU *cpu, Opcode i) {
-    disasm("r%d, %d(r%d)", i.rt, i.offset, i.rs);
+    disasm("r%d, %hx(r%d)", i.rt, i.offset, i.rs);
 
     uint32_t addr = cpu->reg[i.rs] + i.offset;
     uint32_t rt = cpu->reg[i.rt];
