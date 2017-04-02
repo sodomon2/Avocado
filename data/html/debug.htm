@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Avocado debugger</title>
+
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+
+    <script src="js/jquery-3.2.0.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/rivets.bundled.min.js"></script>
+    <script src="js/main.js"></script>
+</head>
+
+<body>
+	<div id="main">
+	    <h1>Avocado debugger</h1>
+
+	    <div id="info">
+	        <h3 rv-if="connected">Connected (<a href="#" rv-on-click="event.disconnect">Disconnect</a>)</h3>
+	        <h3 rv-unless="connected">Disconnected (<a href="#" rv-on-click="event.connect">Connect</a>)</h3>
+	        <h4 rv-show="error">Cannot connect to websocket</h4>
+
+	        <div class="panel panel-primary" id="control" rv-show="connected">
+	            <div class="panel-heading">Control</div>
+	            <div class="panel-body">
+		            <button class="btn btn-primary btn-sm" rv-on-click="event.emu.pause">Pause</button>
+		            <button class="btn btn-primary btn-sm" rv-on-click="event.emu.step">Step</button>
+				</div>	
+			</div>
+
+	        <div rv-show="connected">
+	            <div id="cpu" class="col">
+	                <div class="panel panel-info">
+	                    <div class="panel-heading">CPU</div>
+	                    <div class="panel-body">
+			                <div class="hex">pc: { emu.cpu.pc | hex32 }</div>
+			                <div class="hex">hi: { emu.cpu.hi | hex32 }</div>
+			                <div class="hex">lo: { emu.cpu.lo | hex32 }</div>
+						</div>	
+					</div>
+
+	                <div class="panel panel-info">
+	                    <div class="panel-heading">Registers</div>
+	                    <div class="panel-body">
+			                <ul class="list-unstyled">
+			                    <li class="hex" rv-each-reg="emu.cpu.reg">r{ %reg% }: { reg | hex32 }</li>
+			                </ul>
+						</div>	
+					</div>
+	            </div>
+
+	            <div id="periph" class="col">
+	                <div class="panel panel-info">
+		                <div class="panel-heading">Interrupt</div>
+	                    <div class="panel-body">
+			                <div class="hex">status: { emu.interrupt.status | hex16 }</div>
+			                <div class="hex">mask: { emu.interrupt.mask | hex16 }</div>
+	                    </div>
+	                </div>
+
+	                <div class="panel panel-info" rv-each-timer="emu.timer">
+	                    <div class="panel-heading">Timer { %timer% }</div>
+	                    <div class="panel-body">
+		                    <div class="hex">value: { timer.value | hex16 }</div>
+		                    <div class="hex">mode: { timer.mode | hex16 }</div>
+		                    <div class="hex">target: { timer.target | hex16 }</div>
+	                    </div>
+	                </div>
+	            </div>
+	        </div>
+	    </div>
+    </div>
+</body>
+</html>
