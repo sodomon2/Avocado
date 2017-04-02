@@ -12,6 +12,12 @@
         * {
             font-family: Courier New, Courier, monospace;
         }
+        .col {
+            float: left;
+            margin-left: 2em;
+            margin-right: 2em;
+        }
+
     </style>
 </head>
 
@@ -27,19 +33,36 @@
             <button rv-on-click="event.emu.pause">Pause</button>
             <button rv-on-click="event.emu.step">Step</button>
         </div>
+        
+        <div rv-show="connected">
+            <div id="cpu" class="col">
+                <p>CPU</p>
+                <div>pc: { emu.cpu.pc | hex32 }</div>
+                <div>hi: { emu.cpu.hi | hex32 }</div>
+                <div>lo: { emu.cpu.lo | hex32 }</div>
 
-        <div id="cpu" rv-show="connected">
-            <p>CPU</p>
-            <div>pc: { cpu.pc | hex }</div>
-            <div>hi: { cpu.hi | hex }</div>
-            <div>lo: { cpu.lo | hex }</div>
+                <p>Registers</p>
+                <ul>
+                    <li rv-each-reg="emu.cpu.reg">
+                        r{ %reg% }: { reg | hex32 }
+                    </li>
+                </ul>
+            </div>
 
-            <p>Registers</p>
-            <ul>
-                <li rv-each-reg="cpu.reg">
-                    r{ %reg% }: { reg | hex }
-                </li>
-            </ul>
+            <div id="timer" class="col">
+                <div rv-each-timer="emu.timer">
+                    <p>Timer{ %timer% }</p>
+                    <div>value: { timer.value | hex16 }</div>
+                    <div>mode: { timer.mode | hex16 }</div>
+                    <div>target: { timer.target | hex16 }</div>
+                </div>
+            </div>
+
+            <div id="interrupt" class="col">
+                <p>Interrupt</p>
+                <div>status: { emu.interrupt.status | hex16 }</div>
+                <div>mask: { emu.interrupt.mask | hex16 }</div>
+            </div>
         </div>
     </div>
 
@@ -70,15 +93,22 @@
         }
     };
 
-    rivets.formatters.hex = function(value) {
+    function hex(value, size) {
         if (value == undefined) {
             return "";
         }
         var h = value.toString(16);
-        while (h.length < 8) {
+        while (h.length < size) {
             h = "0" + h;
         }
         return "0x" + h;
+    }
+
+    rivets.formatters.hex32 = function(value) {
+        return hex(value, 8);
+    }
+    rivets.formatters.hex16 = function(value) {
+        return hex(value, 4);
     }
 
     rivets.bind($('#info'), data );
@@ -101,7 +131,7 @@
         };
         ws.onmessage = function(evt) { 
             var j = JSON.parse(evt.data);
-            data.cpu = j.cpu;
+            data.emu = j;
         }
         ws.onerror = function(evt) { 
             data.connected = false;
