@@ -116,18 +116,17 @@ Update:
 
 ### Linux
 Requirements:
-- Clang6 or newer
+- Clang or Gcc
+- [Sdl2-dev](https://www.libsdl.org/download-2.0.php)
 - [Premake5](https://premake.github.io/download.html)
 
 First build: 
 ```
-> sudo apt update
-> sudo apt install libsdl2-dev
 > git clone https://github.com/JaCzekanski/Avocado.git
 > cd Avocado
 > git submodule update --init --recursive
 > premake5 gmake
-> make config=release_x64 -j4
+> make config=release_x64 avocado
 
 # Running
 > ./build/release_x64/avocado
@@ -139,7 +138,7 @@ Update:
 ```
 > git pull && git submodule update --init --recursive
 > premake5 gmake
-> make config=release_x64 -j4
+> make config=release_x64 avocado
 ```
 
 ### macOS
