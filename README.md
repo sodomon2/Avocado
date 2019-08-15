@@ -117,7 +117,7 @@ Update:
 ### Linux
 Requirements:
 - Clang or Gcc
-- [Sdl2-dev](https://www.libsdl.org/download-2.0.php)
+- [SDL2-dev](https://www.libsdl.org/download-2.0.php)
 - [Premake5](https://premake.github.io/download.html)
 
 First build: 
